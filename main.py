@@ -8,7 +8,7 @@ from functools import wraps
 import json
 
 from six.moves.urllib.request import urlopen
-from flask_cors import cross_origin
+from flask_cors import cross_origin, CORS
 from jose import jwt
 
 
@@ -29,6 +29,7 @@ from six.moves.urllib.parse import urlencode
 app = Flask(__name__)
 app.secret_key = 'SECRET_KEY'
 client = datastore.Client()
+CORS(app)
 
 USERS = "users"
 JOBS = "jobs"
