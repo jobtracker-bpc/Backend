@@ -3,38 +3,27 @@ from authlib.integrations.flask_client import OAuth
 from flask import url_for
 from flask import session
 from flask import render_template
-from flask import redirect
 from flask import jsonify
 from flask import Flask
-from dotenv import load_dotenv, find_dotenv
-from werkzeug.exceptions import HTTPException
-from os import environ as env
 from jose import jwt
-from flask_cors import cross_origin
 # from six.moves.urllib.request import urlopen
 import json
-from functools import wraps
 from google.cloud import datastore
-from flask import request, _request_ctx_stack, Response
-import requests
+from flask import request, Response
 import os
 os.environ.setdefault("GCLOUD_PROJECT", "job-tracker-365423")
 
-from functools import wraps
 import json
 
 from urllib.request import urlopen
-from flask_cors import cross_origin, CORS
+from flask_cors import CORS
 from jose import jwt
 
 
 import json
-from werkzeug.exceptions import HTTPException
 
-from dotenv import load_dotenv, find_dotenv
 from flask import Flask
 from flask import jsonify
-from flask import redirect
 from flask import render_template
 from flask import session
 from flask import url_for
@@ -53,6 +42,7 @@ CONTACTS = "contacts"
 
 # Values from auth0
 CLIENT_ID = 'N0FhVfdkCdgFNMV5N1epwRfurdqwW7yL'
+AUDIENCE = 'https://dev-j3jbfoh6.us.auth0.com/api/v2/'
 CLIENT_SECRET = 'uDTy-uqOkRj3JwiFsc8B0lc72DGbRmvxOGarTRy0YTaI-FjQAHIOfWYBIuSjh21F'
 DOMAIN = 'dev-j3jbfoh6.us.auth0.com'
 
@@ -139,7 +129,7 @@ def verify_jwt(request):
                 token,
                 rsa_key,
                 algorithms=ALGORITHMS,
-                audience=CLIENT_ID,
+                audience=AUDIENCE,
                 issuer="https://" + DOMAIN+"/"
             )
         except jwt.ExpiredSignatureError:
