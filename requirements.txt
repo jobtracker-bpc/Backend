@@ -6,3 +6,4 @@ six
 python-dotenv
 requests
 authlib
+protobuf==3.20.0

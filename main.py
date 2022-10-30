@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import urlencode
+# from six.moves.urllib.parse import urlencode
 from authlib.integrations.flask_client import OAuth
 from flask import url_for
 from flask import session
@@ -11,7 +11,7 @@ from werkzeug.exceptions import HTTPException
 from os import environ as env
 from jose import jwt
 from flask_cors import cross_origin
-from six.moves.urllib.request import urlopen
+# from six.moves.urllib.request import urlopen
 import json
 from functools import wraps
 from google.cloud import datastore
@@ -23,13 +23,12 @@ os.environ.setdefault("GCLOUD_PROJECT", "job-tracker-365423")
 from functools import wraps
 import json
 
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 from flask_cors import cross_origin, CORS
 from jose import jwt
 
 
 import json
-from os import environ as env
 from werkzeug.exceptions import HTTPException
 
 from dotenv import load_dotenv, find_dotenv
@@ -40,7 +39,7 @@ from flask import render_template
 from flask import session
 from flask import url_for
 from authlib.integrations.flask_client import OAuth
-from six.moves.urllib.parse import urlencode
+# from six.moves.urllib.parse import urlencode
 
 app = Flask(__name__)
 app.secret_key = 'SECRET_KEY'
