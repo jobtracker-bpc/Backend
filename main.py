@@ -4,11 +4,11 @@ import os
 from urllib.request import urlopen
 
 from authlib.integrations.flask_client import OAuth
-from flask_cors import CORS
 from flask import (Flask, Response, jsonify, render_template, request, session,
                    url_for)
-from jose import jwt
+from flask_cors import CORS
 from google.cloud import datastore
+from jose import jwt
 
 os.environ.setdefault("GCLOUD_PROJECT", "job-tracker-365423")
 
