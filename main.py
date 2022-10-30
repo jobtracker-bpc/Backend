@@ -1,34 +1,17 @@
-# from six.moves.urllib.parse import urlencode
-from authlib.integrations.flask_client import OAuth
-from flask import url_for
-from flask import session
-from flask import render_template
-from flask import jsonify
-from flask import Flask
-from jose import jwt
-# from six.moves.urllib.request import urlopen
+
 import json
-from google.cloud import datastore
-from flask import request, Response
 import os
+from urllib.request import urlopen
+
+from authlib.integrations.flask_client import OAuth
+from flask import (Flask, Response, jsonify, render_template, request, session,
+                   url_for)
+from flask_cors import CORS
+from google.cloud import datastore
+from jose import jwt
+
 os.environ.setdefault("GCLOUD_PROJECT", "job-tracker-365423")
 
-import json
-
-from urllib.request import urlopen
-from flask_cors import CORS
-from jose import jwt
-
-
-import json
-
-from flask import Flask
-from flask import jsonify
-from flask import render_template
-from flask import session
-from flask import url_for
-from authlib.integrations.flask_client import OAuth
-# from six.moves.urllib.parse import urlencode
 
 app = Flask(__name__)
 app.secret_key = 'SECRET_KEY'
