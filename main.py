@@ -3,7 +3,7 @@ import json
 import os
 from urllib.request import urlopen
 
-from flask import (Flask, Response, jsonify, request)
+from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from google.cloud import datastore
 from jose import jwt
@@ -29,6 +29,7 @@ DOMAIN = 'dev-j3jbfoh6.us.auth0.com'
 
 ALGORITHMS = ["RS256"]
 
+
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
@@ -42,6 +43,7 @@ def handle_auth_error(ex):
     return response
 
 # Verify the JWT in the request's Authorization header
+
 
 def verify_jwt(request):
     if 'Authorization' in request.headers:
@@ -107,6 +109,7 @@ def verify_jwt(request):
 
 # Get users
 
+
 @app.route('/users', methods=['GET'])
 def users_get():
     if 'application/json' not in request.accept_mimetypes:
@@ -122,6 +125,7 @@ def users_get():
         return Response({'Error': 'Method not recogonized or permitted'}, 405)
 
 # Create a job if the Authorization header contains a valid JWT
+
 
 @app.route('/jobs', methods=['POST', 'GET'])
 def jobs_post_get():
@@ -365,6 +369,7 @@ def skill_by_id(skill_id):
         return Response(json.dumps(skill), 200)
     else:
         return Response({'Error': 'Method not recogonized or permitted'}, 405)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
