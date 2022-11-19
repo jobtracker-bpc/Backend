@@ -141,9 +141,20 @@ def jobs_post_get():
         new_job = datastore.entity.Entity(key=client.key(JOBS))
         new_job.update({"company": content["company"], "job_title": content["job_title"],
                         "job_link": content["job_link"], "date_applied": content["date_applied"],
-                        "interview": content["interview"], "status": content["status"], "user": payload["sub"]})
+                        "interview": content["interview"], "status": content["status"], "contacts": content["contacts"], "skills": content["skills"], "user": payload["sub"]})
         client.put(new_job)
         new_job["id"] = new_job.key.id
+
+        # for each skill in the job skill array, add the job to the skill's jobs array and update the skill frequency
+        for skill in new_job["skills"]:
+            skill_key = client.key(SKILLS, int(skill["id"]))
+            skill_to_update = client.get(key=skill_key)
+            updated_job_list = skill_to_update["jobs"]
+            updated_job_list.append({"id":new_job.key.id, "job_title": new_job["job_title"], "company":new_job["company"]})
+            skill_to_update.update({"jobs": updated_job_list})
+            skill_to_update.update({"skill_frequency": len(skill_to_update["jobs"])})
+            client.put(skill_to_update)
+        
         return Response(json.dumps(new_job), status=201)
 
     elif request.method == 'GET':
@@ -181,13 +192,22 @@ def job_by_id(job_id):
         if json.dumps(job) == 'null':
             return {"Error": "No job with this job_id exists"}, 404
 
+        # remove job from all skills
+        if len(job["skills"]) > 0:
+            for skill in job["skills"]:
+                skill_to_change = client.get(key=client.key(SKILLS, skill["id"]))
+                for job_to_remove in skill_to_change["jobs"]:
+                    if int(job_to_remove["id"]) == int(job_id):
+                        skill_to_change["jobs"].remove(job_to_remove)
+                        skill_to_change["skill_frequency"] -= 1
+                        client.put(skill_to_change)
+
         client.delete(job_key)
         return ('', 204)
 
     elif request.method == 'GET':
 
         job["id"] = job.key.id
-
         return Response(json.dumps(job), 200)
 
     elif request.method == 'PUT':
@@ -196,9 +216,20 @@ def job_by_id(job_id):
 
         job.update({"company": content["company"], "job_title": content["job_title"],
                     "job_link": content["job_link"], "date_applied": content["date_applied"],
-                    "interview": content["interview"], "status": content["status"]})
+                    "interview": content["interview"], "status": content["status"], "contacts": content["contacts"], "skills": content["skills"], "user": payload["sub"]})
 
         client.put(job)
+
+        # for each skill in the job skill array, add the job to the skill's jobs array and update the skill frequency
+        for skill in job["skills"]:
+            skill_key = client.key(SKILLS, int(skill["id"]))
+            skill_to_update = client.get(key=skill_key)
+            updated_job_list = skill_to_update["jobs"]
+            updated_job_list.append({"id":job.key.id, "job_title": job["job_title"], "company":job["company"]})
+            skill_to_update.update({"jobs": updated_job_list})
+            skill_to_update.update({"skill_frequency": len(skill_to_update["jobs"])})
+            client.put(skill_to_update)
+
         job["id"] = job.key.id
         return Response(json.dumps(job), 200)
 
@@ -309,8 +340,8 @@ def skills_post_get():
         content = request.get_json()
 
         new_skill = datastore.entity.Entity(key=client.key(SKILLS))
-        new_skill.update(
-            {"skill_name": content["skill_name"], "skill_priority": content["skill_priority"], "user": payload["sub"]})
+        new_skill.update({"skill_name": content["skill_name"], "skill_proficiency": content["skill_proficiency"],
+                          "skill_frequency": 0, "jobs": [], "user": payload["sub"]})
         client.put(new_skill)
         new_skill["id"] = new_skill.key.id
         return Response(json.dumps(new_skill), status=201)
@@ -339,15 +370,25 @@ def skill_by_id(skill_id):
         return res
 
     payload = verify_jwt(request)
-
     skill_key = client.key(SKILLS, int(skill_id))
     skill = client.get(key=skill_key)
 
     if skill["user"] != payload["sub"]:
         return {"Error": "This skill belongs to another user"}, 403
+
     if request.method == 'DELETE':
         if json.dumps(skill) == 'null':
             return {"Error": "No skill with this skill_id exists"}, 404
+    
+        # remove skill from all jobs
+        if len(skill["jobs"]) > 0:
+            for job in skill["jobs"]:
+                job_to_change = client.get(key=client.key(JOBS, job["id"]))
+                for skill_to_remove in job_to_change["skills"]:
+                    if int(skill_to_remove["id"]) == int(skill_id):
+                        job_to_change["skills"].remove(skill_to_remove)
+                        client.put(job_to_change)
+
         client.delete(skill_key)
         return '', 204
     elif request.method == 'GET':
@@ -356,7 +397,8 @@ def skill_by_id(skill_id):
     elif request.method == 'PUT':
         content = request.get_json()
         skill.update(
-            {"skill_name": content["skill_name"], "skill_priority": content["skill_priority"]})
+            {"skill_name": content["skill_name"], "skill_proficiency": content["skill_proficiency"],
+             "skill_frequency": content["skill_frequency"], "jobs": content["jobs"], "user": payload["sub"]})
         client.put(skill)
         skill["id"] = skill.key.id
         return Response(json.dumps(skill), 200)
