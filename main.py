@@ -7,6 +7,7 @@ from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from google.cloud import datastore
 from jose import jwt
+from operator import itemgetter
 
 os.environ.setdefault("GCLOUD_PROJECT", "job-tracker-365423")
 
@@ -341,7 +342,7 @@ def skills_post_get():
 
         new_skill = datastore.entity.Entity(key=client.key(SKILLS))
         new_skill.update({"skill_name": content["skill_name"], "skill_proficiency": content["skill_proficiency"],
-                          "skill_frequency": 0, "jobs": [], "user": payload["sub"]})
+                        "skill_frequency": 0, "jobs": [], "user": payload["sub"]})
         client.put(new_skill)
         new_skill["id"] = new_skill.key.id
         return Response(json.dumps(new_skill), status=201)
@@ -398,7 +399,7 @@ def skill_by_id(skill_id):
         content = request.get_json()
         skill.update(
             {"skill_name": content["skill_name"], "skill_proficiency": content["skill_proficiency"],
-             "skill_frequency": content["skill_frequency"], "jobs": content["jobs"], "user": payload["sub"]})
+            "skill_frequency": len(content["jobs"]), "jobs": content["jobs"], "user": payload["sub"]})
         client.put(skill)
         skill["id"] = skill.key.id
         return Response(json.dumps(skill), 200)
@@ -409,6 +410,51 @@ def skill_by_id(skill_id):
         client.put(skill)
         skill["id"] = skill.key.id
         return Response(json.dumps(skill), 200)
+    else:
+        return Response({'Error': 'Method not recogonized or permitted'}, 405)
+
+@app.route('/skills/<skill_id>/frequency', methods = ['GET'])
+def get_skill_frequency(skill_id):
+
+    payload = verify_jwt(request)
+    skill_key = client.key(SKILLS, int(skill_id))
+    skill = client.get(key=skill_key)
+
+    if skill["user"] != payload["sub"]:
+        return {"Error": "This skill belongs to another user"}, 403
+    
+    if request.method == 'GET':
+        query = client.query(kind=JOBS)
+        query = query.add_filter('user', '=', payload["sub"])
+        results = list(query.fetch())
+        total_jobs = len(results)
+        frequency = skill["skill_frequency"]
+        percentage = (frequency / total_jobs) * 100
+        
+        output = {
+            "frequency": frequency,
+            "percentage": percentage
+            }
+
+        return Response(json.dumps(output), 200)
+    else:
+        return Response({'Error': 'Method not recogonized or permitted'}, 405)
+
+@app.route('/skills/topfive', methods = ['GET'])
+def get_top_five_skills():
+
+    payload = verify_jwt(request)
+
+    if request.method == 'GET':
+        query = client.query(kind=SKILLS)
+        query = query.add_filter('user', '=', payload["sub"])
+        results = list(query.fetch())
+        results = sorted(results, key=lambda result: result['skill_frequency'], reverse=True)
+
+        end = 5 if len(results) >= 5 else len(results)
+        output = results[:end]
+        return Response(json.dumps(output), 200)
+        
     else:
         return Response({'Error': 'Method not recogonized or permitted'}, 405)
 
