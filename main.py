@@ -155,6 +155,15 @@ def jobs_post_get():
             skill_to_update.update({"jobs": updated_job_list})
             skill_to_update.update({"skill_frequency": len(skill_to_update["jobs"])})
             client.put(skill_to_update)
+
+                 # for each contact in the job contact array, add the job to the contact's jobs array
+        for contact in new_job["contacts"]:
+            contact_key = client.key(CONTACTS, int(contact["id"]))
+            contact_to_update = client.get(key=contact_key)
+            updated_job_list = contact_to_update["jobs"]
+            updated_job_list.append({"id":new_job.key.id, "job_title": new_job["job_title"], "company":new_job["company"]})
+            contact_to_update.update({"jobs": updated_job_list})
+            client.put(contact_to_update)
         
         return Response(json.dumps(new_job), status=201)
 
@@ -203,6 +212,15 @@ def job_by_id(job_id):
                         skill_to_change["skill_frequency"] -= 1
                         client.put(skill_to_change)
 
+        # remove job from all contacts
+        if len(job["contacts"]) > 0:
+            for contact in job["contacts"]:
+                contact_to_change = client.get(key=client.key(CONTACTS, contact["id"]))
+                for job_to_remove in contact_to_change["jobs"]:
+                    if int(job_to_remove["id"]) == int(job_id):
+                        contact_to_change["jobs"].remove(job_to_remove)
+                        client.put(contact_to_change)
+
         client.delete(job_key)
         return ('', 204)
 
@@ -230,6 +248,15 @@ def job_by_id(job_id):
             skill_to_update.update({"jobs": updated_job_list})
             skill_to_update.update({"skill_frequency": len(skill_to_update["jobs"])})
             client.put(skill_to_update)
+
+         # for each contact in the job contact array, add the job to the contact's jobs array
+        for contact in job["contacts"]:
+            contact_key = client.key(CONTACTS, int(contact["id"]))
+            contact_to_update = client.get(key=contact_key)
+            updated_job_list = contact_to_update["jobs"]
+            updated_job_list.append({"id":job.key.id, "job_title": job["job_title"], "company":job["company"]})
+            contact_to_update.update({"jobs": updated_job_list})
+            client.put(contact_to_update)
 
         job["id"] = job.key.id
         return Response(json.dumps(job), 200)
@@ -260,7 +287,7 @@ def contacts_post_get():
         new_contact = datastore.entity.Entity(key=client.key(CONTACTS))
         new_contact.update({"name": content["name"], "company": content["company"],
                             "position": content["position"], "phone_number": content["phone_number"],
-                            "email": content["email"], "linkedin": content["linkedin"], "user": payload["sub"]})
+                            "email": content["email"], "linkedin": content["linkedin"], "jobs": [], "user": payload["sub"]})
         client.put(new_contact)
         new_contact["id"] = new_contact.key.id
         new_contact["self"] = request.url + '/' + str(new_contact.key.id)
@@ -301,6 +328,15 @@ def contact_by_id(contact_id):
 
         if json.dumps(contact) == 'null':
             return {"Error": "No contact with this contact_id exists"}, 404
+
+        # remove skill from all jobs
+        if len(contact["jobs"]) > 0:
+            for job in contact["jobs"]:
+                job_to_change = client.get(key=client.key(JOBS, job["id"]))
+                for contact_to_remove in job_to_change["skills"]:
+                    if int(contact_to_remove["id"]) == int(contact_id):
+                        job_to_change["skills"].remove(contact_to_remove)
+                        client.put(job_to_change)
 
         client.delete(contact_key)
         return ('', 204)
