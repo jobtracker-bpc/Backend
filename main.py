@@ -465,7 +465,9 @@ def get_skill_frequency(skill_id):
         results = list(query.fetch())
         total_jobs = len(results)
         frequency = skill["skill_frequency"]
-        percentage = (frequency / total_jobs) * 100
+        percentage = 0
+        if frequency > 0:
+            percentage = (frequency / total_jobs) * 100
         
         output = {
             "frequency": frequency,
